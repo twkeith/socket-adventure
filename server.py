@@ -79,9 +79,10 @@ class Server(object):
         :return: str
         """
 
-        # TODO: YOUR CODE HERE
-
-        pass
+        return ["This room has a severed foot.",
+                "This room has a detached finger",
+                "This room has a flower.",
+                "This room has an eyeball"][room_number]
 
     def greet(self):
         """
@@ -107,10 +108,14 @@ class Server(object):
          
         :return: None 
         """
-
         # TODO: YOUR CODE HERE
-
-        pass
+        self.input_buffer = ""
+        while True:
+            data = self.client_connection.recv(64)
+            self.input_buffer = self.input_buffer + data.decode()
+            if self.input_buffer.endswith("\n"):
+                self.input_buffer.strip()
+                break
 
     def move(self, argument):
         """
@@ -132,10 +137,19 @@ class Server(object):
         :param argument: str
         :return: None
         """
+        move_dict = dict()
+        move_dict[("south", 3)] = 0
+        move_dict[("north", 0)] = 3
+        move_dict[("west", 2)] = 0
+        move_dict[("west", 0)] = 1
+        move_dict[("east", 1)] = 0
+        move_dict[("east", 0)] = 2
 
-        # TODO: YOUR CODE HERE
-
-        pass
+        try:
+            self.room = move_dict[(argument, self.room)]
+            self.output_buffer = self.room_description(self.room)
+        except KeyError:
+            self.output_buffer = "You have hit the wall"
 
     def say(self, argument):
         """
@@ -152,8 +166,7 @@ class Server(object):
         """
 
         # TODO: YOUR CODE HERE
-
-        pass
+        self.output_buffer = f'You say, "{argument}"'
 
     def quit(self, argument):
         """
@@ -168,8 +181,8 @@ class Server(object):
         """
 
         # TODO: YOUR CODE HERE
-
-        pass
+        self.done = True
+        self.output_buffer = "Ciao! I hope you got the chills!"
 
     def route(self):
         """
@@ -185,7 +198,16 @@ class Server(object):
 
         # TODO: YOUR CODE HERE
 
-        pass
+        input_commands = self.input_buffer.split(None, 1)
+
+        if input_commands[0] == "quit":
+            self.quit(None)
+
+        if input_commands[0] == "move":
+            self.move(input_commands[1].strip())
+
+        if input_commands[0] == "say":
+            self.say(input_commands[1].strip())
 
     def push_output(self):
         """
@@ -198,8 +220,7 @@ class Server(object):
         """
 
         # TODO: YOUR CODE HERE
-
-        pass
+        self.client_connection.sendall(b"OK! " + self.output_buffer.encode() + b"\n")
 
     def serve(self):
         self.connect()
